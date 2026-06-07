@@ -78,22 +78,30 @@ function processLineExport(content) {
         fileName = sanitizeFileName(parsed.contactName) + '.txt';
       }
 
-      const newContent = formatMessages(parsed.contactName, yearMonth, messages);
       const existingFiles = targetFolder.getFilesByName(fileName);
 
       if (existingFiles.hasNext()) {
         const existingFile = existingFiles.next();
         const existingContent = existingFile.getBlob().getDataAsString('UTF-8');
 
-        // 避免重複寫入：檢查第一則訊息的日期是否已存在
-        const firstDate = messages[0] && messages[0].date;
-        if (firstDate && existingContent.includes(firstDate)) {
-          results.push({ month: yearMonth, count: messages.length, action: 'skipped', url: existingFile.getUrl() });
+        // 取得舊檔案中所有已存在的訊息特徵（指紋）
+        const existingSigs = getExistingSignatures(existingContent);
+        
+        // 過濾出「未曾備份過」的新訊息
+        const newMessages = messages.filter(msg => {
+          const sig = `${msg.date}|${msg.time}|${msg.sender}|${msg.message}`;
+          return !existingSigs.has(sig);
+        });
+
+        if (newMessages.length === 0) {
+          results.push({ month: yearMonth, count: 0, action: 'skipped', url: existingFile.getUrl() });
         } else {
+          const newContent = formatMessages(parsed.contactName, yearMonth, newMessages);
           existingFile.setContent(existingContent + '\n\n' + '─'.repeat(50) + '\n\n' + newContent);
-          results.push({ month: yearMonth, count: messages.length, action: 'updated', url: existingFile.getUrl() });
+          results.push({ month: yearMonth, count: newMessages.length, action: 'updated', url: existingFile.getUrl() });
         }
       } else {
+        const newContent = formatMessages(parsed.contactName, yearMonth, messages);
         const newFile = targetFolder.createFile(fileName, newContent, MimeType.PLAIN_TEXT);
         results.push({ month: yearMonth, count: messages.length, action: 'created', url: newFile.getUrl() });
       }
@@ -448,4 +456,61 @@ function removeTrigger() {
     .filter(t => t.getHandlerFunction() === 'watchAndProcess');
   removed.forEach(t => ScriptApp.deleteTrigger(t));
   Logger.log('已移除 ' + removed.length + ' 個自動觸發器');
+}
+
+// ── 新增工具函式：解析舊備份檔的訊息特徵 ──────────────────
+function getExistingSignatures(content) {
+  const lines = content.split('\n');
+  const sigs = new Set();
+  let currentDate = '';
+  let currentTime = '';
+  let currentSender = '';
+  let currentMessage = [];
+
+  const saveSig = () => {
+    if (currentDate && currentTime && currentSender) {
+      sigs.add(`${currentDate}|${currentTime}|${currentSender}|${currentMessage.join('\n')}`);
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // 判斷是否為日期標頭，如：【 2024-01-10 】
+    const dateMatch = line.match(/^【 (\d{4}-\d{2}-\d{2}) 】$/);
+    if (dateMatch) {
+      saveSig();
+      currentDate = dateMatch[1];
+      currentTime = '';
+      currentSender = '';
+      currentMessage = [];
+      continue;
+    }
+    
+    // 判斷是否為訊息開頭，如：14:30  王小明
+    const msgMatch = line.match(/^(\d{1,2}:\d{2})  (.*)$/);
+    if (msgMatch) {
+      saveSig();
+      currentTime = msgMatch[1];
+      currentSender = msgMatch[2];
+      currentMessage = [];
+      continue;
+    }
+
+    // 收集訊息內容（縮排兩格的行）
+    if (currentTime) {
+      if (line.startsWith('  ')) {
+        currentMessage.push(line.substring(2));
+      } else if (line === '') {
+        // 空行忽略
+      } else {
+        // 遇到其他分隔線或檔頭，代表這則訊息結束
+        saveSig();
+        currentTime = '';
+        currentSender = '';
+      }
+    }
+  }
+  saveSig();
+  return sigs;
 }
