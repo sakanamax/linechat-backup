@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LINE 備份管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:   #06C755;
+      --green-d: #04a844;
+      --red:     #ff5c5c;
+      --red-d:   #e04040;
+      --blue:    #4285F4;
+      --bg:      #0f1117;
+      --surface: rgba(255,255,255,0.05);
+      --border:  rgba(255,255,255,0.1);
+      --text:    #e8eaf0;
+      --muted:   #8b929e;
+      --radius:  16px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px 64px;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(6,199,85,0.1) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(66,133,244,0.08) 0%, transparent 60%);
+    }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 28px; }
+    .logo {
+      display: inline-flex; align-items: center; gap: 12px; margin-bottom: 8px;
+    }
+    .logo-icon {
+      width: 44px; height: 44px; background: var(--green); border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; box-shadow: 0 4px 16px rgba(6,199,85,0.35);
+    }
+    .logo-text { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .subtitle  { color: var(--muted); font-size: 13px; }
+
+    /* ── Card ── */
+    .card {
+      width: 100%; max-width: 560px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(20px);
+      padding: 28px;
+    }
+
+    /* ── Manage header ── */
+    .manage-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .manage-title { font-size: 15px; font-weight: 600; }
+    .btn-refresh {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 8px; padding: 6px 14px; font-family: inherit; font-size: 13px;
+      cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px;
+    }
+    .btn-refresh:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+    .btn-refresh.spinning .ri { animation: spin .7s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Stats ── */
+    .manage-stats {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      padding: 14px 16px; margin-bottom: 20px;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 10px; font-size: 13px; color: var(--muted);
+    }
+    .sv { color: var(--text); font-weight: 600; }
+
+    /* ── Loading ── */
+    .loading { text-align: center; padding: 40px 0; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border); border-top-color: var(--green);
+      border-radius: 50%; animation: spin .8s linear infinite;
+      margin: 0 auto 14px;
+    }
+    .loading-text { color: var(--muted); font-size: 13px; }
+
+    /* ── Empty ── */
+    .empty-state { text-align: center; padding: 48px 16px; color: var(--muted); }
+    .empty-icon { font-size: 44px; margin-bottom: 14px; }
+    .empty-text { font-size: 14px; line-height: 1.7; }
+    .empty-text em { color: var(--green); font-style: normal; }
+
+    /* ── Backup list ── */
+    .backup-list { margin-bottom: 24px; }
+    .backup-row {
+      border: 1px solid var(--border); border-radius: 10px;
+      margin-bottom: 8px; overflow: hidden; transition: border-color .2s;
+    }
+    .backup-row-main {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    }
+    .backup-month  { font-size: 13px; font-weight: 600; color: var(--green); min-width: 64px; flex-shrink: 0; }
+    .backup-contact{ font-size: 14px; flex: 1; }
+    .backup-meta   { font-size: 11px; color: var(--muted); text-align: right; flex-shrink: 0; line-height: 1.5; }
+    .btn-row-del {
+      background: none; border: 1px solid rgba(255,92,92,0.25);
+      border-radius: 6px; color: #ff7e7e; padding: 5px 10px;
+      font-family: inherit; font-size: 12px; cursor: pointer;
+      transition: all .2s; flex-shrink: 0;
+    }
+    .btn-row-del:hover { background: rgba(255,92,92,0.1); }
+
+    /* Inline confirm strip */
+    .confirm-strip {
+      display: none; align-items: center; gap: 10px;
+      padding: 10px 14px; background: rgba(255,92,92,0.06);
+      border-top: 1px solid rgba(255,92,92,0.2); font-size: 13px;
+    }
+    .confirm-strip.show { display: flex; }
+    .confirm-strip span { flex: 1; color: #ffaaaa; }
+    .btn-sc { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); padding: 5px 12px; font-family: inherit; font-size: 12px; cursor: pointer; transition: all .2s; }
+    .btn-sc:hover { color: var(--text); }
+    .btn-sf { background: var(--red); border: none; border-radius: 6px; color: #fff; padding: 5px 12px; font-family: inherit; font-size: 12px; cursor: pointer; }
+    .btn-sf:hover { background: var(--red-d); }
+
+    /* ── Buttons ── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .btn {
+      width: 100%; padding: 13px; border: none; border-radius: 12px;
+      font-family: inherit; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-danger-ghost {
+      background: rgba(255,92,92,0.08); border: 1px solid rgba(255,92,92,0.25);
+      color: #ff7e7e; margin-bottom: 16px;
+    }
+    .btn-danger-ghost:hover { background: rgba(255,92,92,0.14); }
+    .btn-danger-solid { background: var(--red); color: #fff; }
+    .btn-danger-solid:hover:not(:disabled) { background: var(--red-d); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,92,92,0.3); }
+    .btn-danger-solid:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-ghost { background: none; border: 1px solid var(--border); color: var(--muted); font-weight: 400; }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+    /* ── Revoke section ── */
+    .revoke-section {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px;
+    }
+    .revoke-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .revoke-desc  { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+    .btn-revoke-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: #6ba3f5; text-decoration: none;
+      border: 1px solid rgba(66,133,244,0.3); border-radius: 6px;
+      padding: 6px 12px; transition: all .2s;
+    }
+    .btn-revoke-link:hover { background: rgba(66,133,244,0.1); }
+
+    /* ── How to add note ── */
+    .add-note {
+      width: 100%; max-width: 560px; margin-top: 20px;
+      background: rgba(6,199,85,0.06); border: 1px solid rgba(6,199,85,0.15);
+      border-radius: 12px; padding: 16px 20px;
+    }
+    .add-note-title { font-size: 13px; font-weight: 600; color: var(--green); margin-bottom: 10px; }
+    .add-note-steps { display: flex; flex-direction: column; gap: 6px; }
+    .add-note-step  { font-size: 13px; color: var(--muted); display: flex; gap: 10px; align-items: flex-start; line-height: 1.5; }
+    .add-note-num {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: rgba(6,199,85,0.2); color: var(--green);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+    }
+    .add-note-step em { color: var(--text); font-style: normal; }
+
+    /* ── Delete All Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      z-index: 100; align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: #1a1d27; border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px; max-width: 400px; width: 100%;
+      animation: modalIn .2s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-icon  { font-size: 36px; margin-bottom: 14px; }
+    .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .modal-desc  { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+    .modal-info  { background: rgba(255,92,92,0.08); border: 1px solid rgba(255,92,92,0.2); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #ffaaaa; margin-bottom: 16px; }
+    .modal-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .modal-input {
+      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 14px; color: var(--text);
+      font-family: inherit; font-size: 14px; margin-bottom: 16px; transition: border-color .2s;
+    }
+    .modal-input:focus { outline: none; border-color: rgba(255,92,92,0.4); }
+    .modal-input.valid { border-color: rgba(255,92,92,0.6); }
+    .modal-btns { display: flex; gap: 10px; }
+    .modal-btns .btn { margin: 0; }
+
+    /* ── Settings card ── */
+    .settings-card {
+      width: 100%; max-width: 560px; margin-top: 16px;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
+    }
+    .settings-title {
+      font-size: 13px; font-weight: 600; color: var(--muted);
+      margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+    }
+    .radio-cards { display: flex; flex-direction: column; gap: 8px; }
+    .radio-card {
+      display: flex; align-items: flex-start; gap: 12px;
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px; cursor: pointer; transition: all .2s;
+    }
+    .radio-card:hover { border-color: rgba(6,199,85,0.3); background: rgba(6,199,85,0.03); }
+    .radio-card.selected { border-color: var(--green); background: rgba(6,199,85,0.06); }
+    .radio-card input[type=radio] { margin-top: 2px; accent-color: var(--green); flex-shrink: 0; }
+    .radio-card-body { flex: 1; }
+    .radio-card-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .radio-card-path {
+      font-size: 11px; color: var(--muted);
+      font-family: monospace; background: rgba(255,255,255,0.05);
+      border-radius: 4px; padding: 4px 8px; display: inline-block; margin-bottom: 4px;
+    }
+    .radio-card-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .btn-save-settings {
+      margin-top: 14px; width: 100%; padding: 10px;
+      background: rgba(6,199,85,0.12); border: 1px solid rgba(6,199,85,0.3);
+      border-radius: 8px; color: var(--green);
+      font-family: inherit; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-save-settings:hover { background: rgba(6,199,85,0.2); }
+    .btn-save-settings:disabled { opacity: 0.4; cursor: not-allowed; }
+    .settings-saved {
+      font-size: 12px; color: var(--green); text-align: center;
+      margin-top: 8px; opacity: 0; transition: opacity .3s;
+    }
+    .settings-saved.show { opacity: 1; }
+
+    @media (max-width: 480px) {
+      .card { padding: 20px 16px; }
+      .backup-meta { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">💬</div>
+      <div class="logo-text">LINE 備份管理</div>
+    </div>
+    <p class="subtitle">查看與管理你的 LINE 對話備份</p>
+  </div>
+
+  <div class="card">
+
+    <div class="manage-header">
+      <div class="manage-title">已備份的對話</div>
+      <button class="btn-refresh" id="btnRefresh" onclick="loadBackups()">
+        <span class="ri">↻</span> 重新整理
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" id="stateLoading">
+      <div class="spinner"></div>
+      <div class="loading-text">讀取備份清單中...</div>
+    </div>
+
+    <!-- Content -->
+    <div id="stateContent" style="display:none">
+
+      <!-- Empty -->
+      <div class="empty-state" id="stateEmpty" style="display:none">
+        <div class="empty-icon">📭</div>
+        <div class="empty-text">
+          還沒有任何備份<br>
+          將 LINE 匯出的 <em>.txt 檔案</em> 上傳到<br>
+          Google Drive 的 <em>「LINE待處理」</em> 資料夾即可開始
+        </div>
+      </div>
+
+      <!-- List -->
+      <div id="stateList" style="display:none">
+
+        <div class="manage-stats" id="manageStats"></div>
+
+        <div class="backup-list" id="backupList"></div>
+
+        <hr class="divider">
+
+        <button class="btn btn-danger-ghost" onclick="openModal()">🗑 刪除全部備份</button>
+
+        <div class="revoke-section">
+          <div class="revoke-title">🔓 撤銷此工具的授權</div>
+          <div class="revoke-desc">
+            若不再使用此工具，可撤銷授權。撤銷後工具無法存取你的 Drive，
+            但已備份的檔案<strong>不會</strong>自動刪除。
+          </div>
+          <a class="btn-revoke-link" href="https://myaccount.google.com/permissions" target="_blank">
+            ↗ Google 帳號 → 安全性 → 第三方應用程式
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div><!-- /.card -->
+
+  <!-- How to add backups -->
+  <div class="add-note">
+    <div class="add-note-title">📤 如何新增備份</div>
+    <div class="add-note-steps">
+      <div class="add-note-step">
+        <div class="add-note-num">1</div>
+        <div>LINE 進入對話 → <em>⋮ 設定 → 傳送聊天記錄</em></div>
+      </div>
+      <div class="add-note-step">
+        <div class="add-note-num">2</div>
+        <div>分享選單選 <em>「雲端硬碟」</em></div>
+      </div>
+      <div class="add-note-step">
+        <div class="add-note-num">3</div>
+        <div>導覽到 <em>「LINE待處理」</em> 資料夾 → 儲存</div>
+      </div>
+      <div class="add-note-step">
+        <div class="add-note-num">4</div>
+        <div>等待最多 <em>1 小時</em>，備份自動出現在「LINE備份」</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings card -->
+  <div class="settings-card">
+    <div class="settings-title">⚙️ 資料夾結構設定</div>
+    <div class="radio-cards">
+
+      <label class="radio-card" id="cardA">
+        <input type="radio" name="folderStructure" id="optA" value="A">
+        <div class="radio-card-body">
+          <div class="radio-card-title">📁 依聯絡人分類</div>
+          <div class="radio-card-path">LINE備份 / 王花花 / 2026-06 / 對話記錄.txt</div>
+          <div class="radio-card-desc">適合想快速找到某人所有對話的人</div>
+        </div>
+      </label>
+
+      <label class="radio-card" id="cardB">
+        <input type="radio" name="folderStructure" id="optB" value="B">
+        <div class="radio-card-body">
+          <div class="radio-card-title">📅 依月份分類</div>
+          <div class="radio-card-path">LINE備份 / 2026-06 / 王花花.txt</div>
+          <div class="radio-card-desc">適合想看某個月份所有人的對話的人</div>
+        </div>
+      </label>
+
+    </div>
+    <button class="btn-save-settings" id="btnSaveSettings" onclick="saveSettingsFn()">儲存設定</button>
+    <div class="settings-saved" id="settingsSaved">✅ 已儲存！下次備份將使用新結構。</div>
+  </div>
+
+  <!-- Delete All Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <div class="modal-icon">⚠️</div>
+      <div class="modal-title">刪除全部備份？</div>
+      <div class="modal-desc">
+        此操作將整個「LINE備份」資料夾移至垃圾桶。<br>
+        <strong>30 天內</strong>可從垃圾桶還原。
+      </div>
+      <div class="modal-info" id="modalInfo">—</div>
+      <div class="modal-label">請輸入「<strong>確認刪除</strong>」以繼續：</div>
+      <input class="modal-input" id="modalInput" type="text"
+             placeholder="確認刪除" oninput="checkInput()">
+      <div class="modal-btns">
+        <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+        <button class="btn btn-danger-solid" id="btnConfirm"
+                disabled onclick="confirmDeleteAll()">刪除全部</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+let allBackups = [];
+
+// ── Load ──
+function loadBackups() {
+  const btn = document.getElementById('btnRefresh');
+  btn.classList.add('spinning');
+  show('stateLoading'); hide('stateContent');
+
+  google.script.run
+    .withSuccessHandler(render)
+    .withFailureHandler(err => {
+      btn.classList.remove('spinning');
+      show('stateContent'); show('stateEmpty'); hide('stateList');
+      document.querySelector('.empty-text').innerHTML =
+        `讀取失敗：${err.message||'未知錯誤'}`;
+    })
+    .listBackups();
+}
+
+function render(res) {
+  document.getElementById('btnRefresh').classList.remove('spinning');
+  hide('stateLoading'); show('stateContent');
+
+  if (!res.success) {
+    show('stateEmpty'); hide('stateList');
+    document.querySelector('.empty-text').innerHTML =
+      `讀取失敗：${res.error||''}`;
+    return;
+  }
+
+  allBackups = res.backups || [];
+
+  if (allBackups.length === 0) {
+    show('stateEmpty'); hide('stateList'); return;
+  }
+
+  hide('stateEmpty'); show('stateList');
+
+  // Stats
+  const months = new Set(allBackups.map(b => b.month)).size;
+  document.getElementById('manageStats').innerHTML =
+    `<span><span class="sv">${allBackups.length}</span> 個檔案</span>
+     <span><span class="sv">${months}</span> 個月份</span>
+     <span><span class="sv">${fmt(res.totalSize||0)}</span></span>`;
+
+  // Rows
+  document.getElementById('backupList').innerHTML = allBackups.map((b,i) => `
+    <div class="backup-row" id="row${i}">
+      <div class="backup-row-main">
+        <div class="backup-month">${b.month}</div>
+        <div class="backup-contact">${b.contactName}</div>
+        <div class="backup-meta">${fmt(b.size)}<br>${ago(b.lastUpdated)}</div>
+        <button class="btn-row-del" onclick="promptDel(${i})">刪除</button>
+      </div>
+      <div class="confirm-strip" id="strip${i}">
+        <span>⚠️ 確定？（移至垃圾桶）</span>
+        <button class="btn-sc" onclick="cancelDel(${i})">取消</button>
+        <button class="btn-sf" onclick="doDel(${i},'${b.id}')">確定</button>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('modalInfo').textContent =
+    `即將刪除：${allBackups.length} 個檔案（${months} 個月份）`;
+}
+
+// ── Row delete ──
+function promptDel(i) {
+  document.querySelectorAll('.confirm-strip.show').forEach(s=>s.classList.remove('show'));
+  document.getElementById('strip'+i).classList.add('show');
+}
+function cancelDel(i) { document.getElementById('strip'+i).classList.remove('show'); }
+function doDel(i, fileId) {
+  const row = document.getElementById('row'+i);
+  row.style.opacity = '.4'; row.style.pointerEvents = 'none';
+  google.script.run
+    .withSuccessHandler(r => {
+      if (r.success) {
+        row.remove();
+        allBackups.splice(i,1);
+        if (!allBackups.length) { hide('stateList'); show('stateEmpty'); }
+      } else {
+        row.style.opacity='1'; row.style.pointerEvents='';
+        alert('刪除失敗：'+r.error);
+      }
+    })
+    .withFailureHandler(e => {
+      row.style.opacity='1'; row.style.pointerEvents='';
+      alert('刪除失敗：'+(e.message||'未知錯誤'));
+    })
+    .deleteBackupFile(fileId);
+}
+
+// ── Delete all modal ──
+function openModal() {
+  document.getElementById('modalInput').value='';
+  document.getElementById('btnConfirm').disabled=true;
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeModal() { document.getElementById('deleteModal').classList.remove('show'); }
+function checkInput() {
+  const ok = document.getElementById('modalInput').value==='確認刪除';
+  document.getElementById('modalInput').classList.toggle('valid',ok);
+  document.getElementById('btnConfirm').disabled=!ok;
+}
+function confirmDeleteAll() {
+  const btn=document.getElementById('btnConfirm');
+  btn.disabled=true; btn.textContent='刪除中...';
+  google.script.run
+    .withSuccessHandler(r => {
+      closeModal();
+      allBackups=[];
+      hide('stateList'); show('stateEmpty');
+      document.querySelector('.empty-text').innerHTML =
+        `所有備份已移至垃圾桶<br><span style="font-size:12px">可在 Google Drive 垃圾桶還原（30 天內）</span>`;
+      btn.textContent='刪除全部'; btn.disabled=false;
+    })
+    .withFailureHandler(e=>{
+      closeModal();
+      alert('刪除失敗：'+(e.message||''));
+      btn.textContent='刪除全部'; btn.disabled=false;
+    })
+    .deleteAllBackups();
+}
+document.getElementById('deleteModal').addEventListener('click',function(e){
+  if(e.target===this) closeModal();
+});
+
+// ── Utils ──
+function show(id){ document.getElementById(id).style.display='block'; }
+function hide(id){ document.getElementById(id).style.display='none'; }
+function fmt(b){
+  if(!b) return '0 B';
+  if(b<1024) return b+' B';
+  if(b<1048576) return (b/1024).toFixed(1)+' KB';
+  return (b/1048576).toFixed(1)+' MB';
+}
+function ago(iso){
+  if(!iso) return '';
+  const m=Math.floor((Date.now()-new Date(iso))/60000);
+  if(m<60) return m+'分鐘前';
+  const h=Math.floor(m/60);
+  if(h<24) return h+'小時前';
+  const d=Math.floor(h/24);
+  return d<30?d+'天前':Math.floor(d/30)+'個月前';
+}
+
+// ── Settings ──
+function loadSettings() {
+  google.script.run
+    .withSuccessHandler(function(s) {
+      const val = s.folderStructure || 'A';
+      document.getElementById('opt' + val).checked = true;
+      updateRadioUI();
+    })
+    .getSettings();
+}
+
+function updateRadioUI() {
+  ['A','B'].forEach(function(v) {
+    const selected = document.getElementById('opt'+v).checked;
+    document.getElementById('card'+v).classList.toggle('selected', selected);
+  });
+}
+
+['optA','optB'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', updateRadioUI);
+});
+
+function saveSettingsFn() {
+  const val = document.querySelector('input[name=folderStructure]:checked').value;
+  const btn = document.getElementById('btnSaveSettings');
+  btn.disabled = true; btn.textContent = '儲存中...';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      btn.disabled = false; btn.textContent = '儲存設定';
+      if (r.success) {
+        const el = document.getElementById('settingsSaved');
+        el.classList.add('show');
+        setTimeout(function() { el.classList.remove('show'); }, 3000);
+      } else {
+        alert('儲存失敗：' + (r.error || ''));
+      }
+    })
+    .withFailureHandler(function(e) {
+      btn.disabled = false; btn.textContent = '儲存設定';
+      alert('儲存失敗：' + (e.message || ''));
+    })
+    .saveSettings({ folderStructure: val });
+}
+
+// ── Init ──
+loadBackups();
+loadSettings();
+</script>
+</body>
+</html>

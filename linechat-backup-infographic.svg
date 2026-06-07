@@ -1,0 +1,227 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&amp;display=swap');
+      * { font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif; }
+      .mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+    </style>
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#b84500"/>
+      <stop offset="100%" style="stop-color:#e06000"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0fdf4"/>
+      <stop offset="100%" style="stop-color:#dcfce7"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fffbeb"/>
+      <stop offset="100%" style="stop-color:#fef3c7"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#eff6ff"/>
+      <stop offset="100%" style="stop-color:#dbeafe"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00000015"/>
+    </filter>
+  </defs>
+
+  <!-- Page Background -->
+  <rect width="1200" height="800" fill="#f8fafc"/>
+
+  <!-- ====== HEADER ====== -->
+  <rect width="1200" height="120" fill="url(#headerGrad)"/>
+  
+  <!-- Header decoration line -->
+  <rect y="114" width="1200" height="6" fill="rgba(0,0,0,0.15)"/>
+  
+  <!-- Header icon -->
+  <circle cx="68" cy="60" r="36" fill="rgba(255,255,255,0.18)"/>
+  <text x="68" y="72" text-anchor="middle" font-size="28" fill="white">💬</text>
+  
+  <!-- Header Title -->
+  <text x="120" y="44" font-size="30" font-weight="700" fill="white" letter-spacing="1">LINE 訊息備份工具</text>
+  <text x="120" y="72" font-size="16" fill="#ffdab0">自動備份 LINE 對話記錄到 Google Drive，無伺服器、零成本</text>
+
+  <!-- Tech Tags -->
+  <rect x="120" y="85" width="148" height="24" rx="12" fill="rgba(255,255,255,0.2)"/>
+  <text x="194" y="101" text-anchor="middle" font-size="12" fill="white">Google Apps Script</text>
+  
+  <rect x="276" y="85" width="118" height="24" rx="12" fill="rgba(255,255,255,0.2)"/>
+  <text x="335" y="101" text-anchor="middle" font-size="12" fill="white">Google Drive API</text>
+  
+  <rect x="402" y="85" width="72" height="24" rx="12" fill="rgba(255,255,255,0.2)"/>
+  <text x="438" y="101" text-anchor="middle" font-size="12" fill="white">Web App</text>
+
+  <!-- ====== FLOW / ARCHITECTURE STRIP ====== -->
+  <rect y="120" width="1200" height="80" fill="#f1f5f9"/>
+  
+  <!-- Flow steps -->
+  <!-- Step 1: LINE -->
+  <rect x="40" y="135" width="160" height="50" rx="8" fill="white" stroke="#06c755" stroke-width="2" filter="url(#shadow)"/>
+  <text x="120" y="155" text-anchor="middle" font-size="13" font-weight="600" fill="#059669">📱 LINE App</text>
+  <text x="120" y="172" text-anchor="middle" font-size="11" fill="#64748b">傳送聊天記錄</text>
+  
+  <!-- Arrow 1 -->
+  <line x1="200" y1="160" x2="248" y2="160" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="248,155 258,160 248,165" fill="#94a3b8"/>
+  
+  <!-- Step 2: LINE待處理 -->
+  <rect x="258" y="135" width="160" height="50" rx="8" fill="white" stroke="#f59e0b" stroke-width="2" filter="url(#shadow)"/>
+  <text x="338" y="155" text-anchor="middle" font-size="13" font-weight="600" fill="#d97706">📁 LINE待處理</text>
+  <text x="338" y="172" text-anchor="middle" font-size="11" fill="#64748b">上傳到 Google Drive</text>
+  
+  <!-- Arrow 2 -->
+  <line x1="418" y1="160" x2="466" y2="160" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="466,155 476,160 466,165" fill="#94a3b8"/>
+  
+  <!-- Step 3: GAS -->
+  <rect x="476" y="135" width="180" height="50" rx="8" fill="white" stroke="#b84500" stroke-width="2" filter="url(#shadow)"/>
+  <text x="566" y="155" text-anchor="middle" font-size="13" font-weight="600" fill="#b84500">⚙️ Apps Script</text>
+  <text x="566" y="172" text-anchor="middle" font-size="11" fill="#64748b">每小時自動解析整理</text>
+  
+  <!-- Arrow 3 -->
+  <line x1="656" y1="160" x2="704" y2="160" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="704,155 714,160 704,165" fill="#94a3b8"/>
+  
+  <!-- Step 4: LINE備份 -->
+  <rect x="714" y="135" width="160" height="50" rx="8" fill="white" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+  <text x="794" y="155" text-anchor="middle" font-size="13" font-weight="600" fill="#2563eb">📁 LINE備份</text>
+  <text x="794" y="172" text-anchor="middle" font-size="11" fill="#64748b">聯絡人 / 月份 整理</text>
+  
+  <!-- Arrow 4 -->
+  <line x1="874" y1="160" x2="922" y2="160" stroke="#94a3b8" stroke-width="2"/>
+  <polygon points="922,155 932,160 922,165" fill="#94a3b8"/>
+  
+  <!-- Step 5: Web App -->
+  <rect x="932" y="135" width="160" height="50" rx="8" fill="white" stroke="#8b5cf6" stroke-width="2" filter="url(#shadow)"/>
+  <text x="1012" y="155" text-anchor="middle" font-size="13" font-weight="600" fill="#7c3aed">🌐 Web App</text>
+  <text x="1012" y="172" text-anchor="middle" font-size="11" fill="#64748b">管理介面（瀏覽器開啟）</text>
+
+  <!-- ====== FEATURE CARDS ====== -->
+  <!-- Card 1: 自動解析 (Green) -->
+  <rect x="24" y="216" width="368" height="340" rx="12" fill="url(#greenGrad)" stroke="#10b981" stroke-width="2" filter="url(#shadow)"/>
+  
+  <!-- Card 1 Header -->
+  <rect x="24" y="216" width="368" height="50" rx="12" fill="#10b981"/>
+  <rect x="24" y="248" width="368" height="18" fill="#10b981"/>
+  <text x="48" y="247" font-size="16" font-weight="700" fill="white">🔍 智慧解析引擎</text>
+  
+  <!-- Card 1 Feature list -->
+  <text x="44" y="290" font-size="13" font-weight="600" fill="#059669">解析能力</text>
+  <text x="44" y="312" font-size="12" fill="#1e293b">✓ 中文、英文、日文格式全支援</text>
+  <text x="44" y="332" font-size="12" fill="#1e293b">✓ 自動識別聯絡人名稱</text>
+  <text x="44" y="352" font-size="12" fill="#1e293b">✓ 精準解析時間戳記與發送者</text>
+  <text x="44" y="372" font-size="12" fill="#1e293b">✓ 多行訊息自動合併</text>
+  
+  <text x="44" y="398" font-size="13" font-weight="600" fill="#059669">去重機制</text>
+  <text x="44" y="418" font-size="12" fill="#1e293b">✓ 自動偵測重複上傳</text>
+  <text x="44" y="438" font-size="12" fill="#1e293b">✓ 同月新資料自動追加</text>
+  <text x="44" y="458" font-size="12" fill="#1e293b">✓ 不覆蓋已有備份</text>
+  
+  <!-- Code snippet -->
+  <rect x="36" y="470" width="344" height="72" rx="6" fill="white" stroke="#10b981" stroke-width="1.5"/>
+  <text x="48" y="490" font-size="11" fill="#64748b" font-style="italic">// 解析聯絡人名稱</text>
+  <text x="48" y="508" font-size="11" fill="#1e293b" font-family="monospace">/[和與]\s*(.+?)\s*的聊天記錄/</text>
+  <text x="48" y="526" font-size="11" fill="#64748b" font-style="italic">// LINE Android 格式（Tab 分隔）</text>
+  <text x="48" y="542" font-size="11" fill="#1e293b" font-family="monospace">14:30 ⇥ 王小明 ⇥ 哈囉！</text>
+
+  <!-- Card 2: 資料夾結構 (Amber) -->
+  <rect x="416" y="216" width="368" height="340" rx="12" fill="url(#amberGrad)" stroke="#f59e0b" stroke-width="2" filter="url(#shadow)"/>
+  
+  <!-- Card 2 Header -->
+  <rect x="416" y="216" width="368" height="50" rx="12" fill="#f59e0b"/>
+  <rect x="416" y="248" width="368" height="18" fill="#f59e0b"/>
+  <text x="440" y="247" font-size="16" font-weight="700" fill="white">📂 彈性資料夾結構</text>
+  
+  <!-- Card 2 Structure A -->
+  <text x="436" y="290" font-size="13" font-weight="600" fill="#d97706">結構 A（預設）— 依聯絡人</text>
+  <rect x="436" y="300" width="328" height="76" rx="6" fill="white" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="448" y="318" font-size="11" fill="#1e293b" font-family="monospace">📁 LINE備份/</text>
+  <text x="448" y="334" font-size="11" fill="#1e293b" font-family="monospace">  📁 王小明/</text>
+  <text x="448" y="350" font-size="11" fill="#1e293b" font-family="monospace">    📁 2026-06/</text>
+  <text x="448" y="366" font-size="11" fill="#1e293b" font-family="monospace">      📄 對話記錄.txt</text>
+
+  <!-- Card 2 Structure B -->
+  <text x="436" y="400" font-size="13" font-weight="600" fill="#d97706">結構 B — 依月份</text>
+  <rect x="436" y="410" width="328" height="60" rx="6" fill="white" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="448" y="428" font-size="11" fill="#1e293b" font-family="monospace">📁 LINE備份/</text>
+  <text x="448" y="444" font-size="11" fill="#1e293b" font-family="monospace">  📁 2026-06/</text>
+  <text x="448" y="460" font-size="11" fill="#1e293b" font-family="monospace">    📄 王小明.txt</text>
+
+  <!-- Switch notice -->
+  <rect x="436" y="480" width="328" height="60" rx="6" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1"/>
+  <text x="600" y="504" text-anchor="middle" font-size="12" fill="#92400e">⚙️ 可在 Web App 管理介面</text>
+  <text x="600" y="524" text-anchor="middle" font-size="12" fill="#92400e">隨時切換兩種結構</text>
+
+  <!-- Card 3: Web App 管理介面 (Blue) -->
+  <rect x="808" y="216" width="368" height="340" rx="12" fill="url(#blueGrad)" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+  
+  <!-- Card 3 Header -->
+  <rect x="808" y="216" width="368" height="50" rx="12" fill="#3b82f6"/>
+  <rect x="808" y="248" width="368" height="18" fill="#3b82f6"/>
+  <text x="832" y="247" font-size="16" font-weight="700" fill="white">🌐 Web App 管理介面</text>
+  
+  <!-- Card 3 Feature list -->
+  <text x="828" y="290" font-size="13" font-weight="600" fill="#2563eb">管理功能</text>
+  <text x="828" y="312" font-size="12" fill="#1e293b">📋  查看所有備份清單</text>
+  <text x="828" y="332" font-size="12" fill="#1e293b">⬆️  手動上傳 .txt 立即處理</text>
+  <text x="828" y="352" font-size="12" fill="#1e293b">🗑️  刪除單筆 / 清空全部</text>
+  <text x="828" y="372" font-size="12" fill="#1e293b">⚙️  切換資料夾結構</text>
+  <text x="828" y="392" font-size="12" fill="#1e293b">🔗  撤銷授權說明</text>
+
+  <text x="828" y="416" font-size="13" font-weight="600" fill="#2563eb">安全設定</text>
+  <rect x="828" y="424" width="328" height="72" rx="6" fill="white" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="840" y="443" font-size="11" fill="#1e293b">執行身分：<tspan font-weight="600">以我（Me）的身份</tspan></text>
+  <text x="840" y="461" font-size="11" fill="#1e293b">存取權限：<tspan font-weight="600">只有我自己</tspan></text>
+  <text x="840" y="479" font-size="11" fill="#64748b">資料僅存在您自己的 Google Drive</text>
+  <text x="840" y="495" font-size="11" fill="#64748b">不經過任何第三方服務</text>
+
+  <!-- ====== QUICK START ====== -->
+  <rect y="572" width="1200" height="158" fill="#f1f5f9"/>
+  
+  <text x="60" y="600" font-size="15" font-weight="700" fill="#1e293b">🚀 快速開始（一次性設定，約 15 分鐘）</text>
+
+  <!-- Step 1 -->
+  <rect x="24" y="614" width="348" height="100" rx="8" fill="white" stroke="rgba(184,69,0,0.3)" stroke-width="1.5"/>
+  <circle cx="60" cy="638" r="14" fill="#b84500"/>
+  <text x="60" y="643" text-anchor="middle" font-size="13" font-weight="700" fill="white">1</text>
+  <text x="84" y="639" font-size="13" font-weight="600" fill="#1e293b">建立 GAS 專案</text>
+  <rect x="36" y="650" width="324" height="52" rx="5" fill="#1e293b"/>
+  <text x="48" y="669" font-size="11" fill="#94a3b8" font-family="monospace"># 前往</text>
+  <text x="48" y="685" font-size="11" fill="#34d399" font-family="monospace">https://script.google.com</text>
+  <text x="48" y="701" font-size="11" fill="#64748b" font-family="monospace">→ 新增專案 → 命名「LINE備份工具」</text>
+
+  <!-- Step 2 -->
+  <rect x="428" y="614" width="344" height="100" rx="8" fill="white" stroke="rgba(184,69,0,0.3)" stroke-width="1.5"/>
+  <circle cx="464" cy="638" r="14" fill="#b84500"/>
+  <text x="464" y="643" text-anchor="middle" font-size="13" font-weight="700" fill="white">2</text>
+  <text x="488" y="639" font-size="13" font-weight="600" fill="#1e293b">貼上程式碼並設定權限</text>
+  <rect x="440" y="650" width="320" height="52" rx="5" fill="#1e293b"/>
+  <text x="452" y="669" font-size="11" fill="#94a3b8" font-family="monospace"># 貼上 Code.gs + Index.html</text>
+  <text x="452" y="685" font-size="11" fill="#fbbf24" font-family="monospace">installTrigger()  ← 執行此函式</text>
+  <text x="452" y="701" font-size="11" fill="#64748b" font-family="monospace">→ 授權 → 建立觸發器</text>
+
+  <!-- Step 3 -->
+  <rect x="828" y="614" width="348" height="100" rx="8" fill="white" stroke="rgba(184,69,0,0.3)" stroke-width="1.5"/>
+  <circle cx="864" cy="638" r="14" fill="#b84500"/>
+  <text x="864" y="643" text-anchor="middle" font-size="13" font-weight="700" fill="white">3</text>
+  <text x="888" y="639" font-size="13" font-weight="600" fill="#1e293b">部署 Web App，開始使用</text>
+  <rect x="840" y="650" width="324" height="52" rx="5" fill="#1e293b"/>
+  <text x="852" y="669" font-size="11" fill="#94a3b8" font-family="monospace"># 部署 → 網頁應用程式</text>
+  <text x="852" y="685" font-size="11" fill="#93c5fd" font-family="monospace">執行身分: Me | 存取: 只有我</text>
+  <text x="852" y="701" font-size="11" fill="#64748b" font-family="monospace">→ 取得管理介面網址</text>
+
+  <!-- ====== FOOTER ====== -->
+  <rect y="730" width="1200" height="70" fill="#e2e8f0"/>
+  <line x1="0" y1="730" x2="1200" y2="730" stroke="#cbd5e1" stroke-width="1"/>
+  
+  <text x="40" y="755" font-size="12" font-weight="600" fill="#475569">所需權限</text>
+  <text x="40" y="774" font-size="11" fill="#64748b">drive · script.scriptapp（OAuth 2.0，存取範圍限自己的 Drive）</text>
+  
+  <text x="400" y="755" font-size="12" font-weight="600" fill="#475569">依賴套件</text>
+  <text x="400" y="774" font-size="11" fill="#64748b">無外部套件 — 純 Google Apps Script 原生 API</text>
+  
+  <text x="760" y="755" font-size="12" font-weight="600" fill="#475569">資料來源</text>
+  <text x="760" y="774" font-size="11" fill="#64748b">LINE 「傳送聊天記錄」匯出的 .txt（Android 正體中文 / 簡體 / EN / JA）</text>
+</svg>
