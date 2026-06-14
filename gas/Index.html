@@ -334,6 +334,58 @@
     <p class="subtitle">查看與管理你的 LINE 對話備份</p>
   </div>
 
+  <!-- How to add backups -->
+  <div class="add-note">
+    <div class="add-note-title">📤 如何新增備份</div>
+    <div class="add-note-steps">
+      <div class="add-note-step">
+        <div class="add-note-num">1</div>
+        <div>LINE 進入對話 → <em>⋮ 設定 → 傳送聊天記錄</em></div>
+      </div>
+      <div class="add-note-step">
+        <div class="add-note-num">2</div>
+        <div>分享選單選 <em>「雲端硬碟」</em></div>
+      </div>
+      <div class="add-note-step">
+        <div class="add-note-num">3</div>
+        <div>導覽到 <em>「LINE待處理」</em> 資料夾 → 儲存</div>
+      </div>
+      <div class="add-note-step">
+        <div class="add-note-num">4</div>
+        <div>等待最多 <em>1 小時</em>，備份自動出現在「LINE備份」</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings card -->
+  <div class="settings-card">
+    <div class="settings-title">⚙️ 資料夾結構設定</div>
+    <div class="radio-cards">
+
+      <label class="radio-card" id="cardA">
+        <input type="radio" name="folderStructure" id="optA" value="A">
+        <div class="radio-card-body">
+          <div class="radio-card-title">📁 依聯絡人分類</div>
+          <div class="radio-card-path">LINE備份 / 王花花 / 2026-06 / 對話記錄.txt</div>
+          <div class="radio-card-desc">適合想快速找到某人所有對話的人</div>
+        </div>
+      </label>
+
+      <label class="radio-card" id="cardB">
+        <input type="radio" name="folderStructure" id="optB" value="B">
+        <div class="radio-card-body">
+          <div class="radio-card-title">📅 依月份分類</div>
+          <div class="radio-card-path">LINE備份 / 2026-06 / 王花花.txt</div>
+          <div class="radio-card-desc">適合想看某個月份所有人的對話的人</div>
+        </div>
+      </label>
+
+    </div>
+    <button class="btn-save-settings" id="btnSaveSettings" onclick="saveSettingsFn()">儲存設定</button>
+    <div class="settings-saved" id="settingsSaved">✅ 已儲存！下次備份將使用新結構。</div>
+  </div>
+
+
   <div class="card">
 
     <div class="manage-header">
@@ -402,57 +454,6 @@
 
   </div><!-- /.card -->
 
-  <!-- How to add backups -->
-  <div class="add-note">
-    <div class="add-note-title">📤 如何新增備份</div>
-    <div class="add-note-steps">
-      <div class="add-note-step">
-        <div class="add-note-num">1</div>
-        <div>LINE 進入對話 → <em>⋮ 設定 → 傳送聊天記錄</em></div>
-      </div>
-      <div class="add-note-step">
-        <div class="add-note-num">2</div>
-        <div>分享選單選 <em>「雲端硬碟」</em></div>
-      </div>
-      <div class="add-note-step">
-        <div class="add-note-num">3</div>
-        <div>導覽到 <em>「LINE待處理」</em> 資料夾 → 儲存</div>
-      </div>
-      <div class="add-note-step">
-        <div class="add-note-num">4</div>
-        <div>等待最多 <em>1 小時</em>，備份自動出現在「LINE備份」</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Settings card -->
-  <div class="settings-card">
-    <div class="settings-title">⚙️ 資料夾結構設定</div>
-    <div class="radio-cards">
-
-      <label class="radio-card" id="cardA">
-        <input type="radio" name="folderStructure" id="optA" value="A">
-        <div class="radio-card-body">
-          <div class="radio-card-title">📁 依聯絡人分類</div>
-          <div class="radio-card-path">LINE備份 / 王花花 / 2026-06 / 對話記錄.txt</div>
-          <div class="radio-card-desc">適合想快速找到某人所有對話的人</div>
-        </div>
-      </label>
-
-      <label class="radio-card" id="cardB">
-        <input type="radio" name="folderStructure" id="optB" value="B">
-        <div class="radio-card-body">
-          <div class="radio-card-title">📅 依月份分類</div>
-          <div class="radio-card-path">LINE備份 / 2026-06 / 王花花.txt</div>
-          <div class="radio-card-desc">適合想看某個月份所有人的對話的人</div>
-        </div>
-      </label>
-
-    </div>
-    <button class="btn-save-settings" id="btnSaveSettings" onclick="saveSettingsFn()">儲存設定</button>
-    <div class="settings-saved" id="settingsSaved">✅ 已儲存！下次備份將使用新結構。</div>
-  </div>
-
   <!-- Delete All Modal -->
   <div class="modal-overlay" id="deleteModal">
     <div class="modal">
@@ -485,6 +486,7 @@ function loadStats() {
   google.script.run
     .withSuccessHandler(res => {
       hide('stateLoading');
+      show('stateContent');
       if (!res.success) {
         show('stateEmpty');
         document.querySelector('.empty-text').innerHTML = '讀取統計失敗：' + (res.error||'');
@@ -503,6 +505,7 @@ function loadStats() {
         hide('errorSection');
       }
 
+      show('stateContent');
       show('stateEmpty');
       document.querySelector('.empty-text').innerHTML = '點擊右上角「查詢」載入詳細清單';
     })
