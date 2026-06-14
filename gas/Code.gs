@@ -381,7 +381,7 @@ function getBackupStats() {
     if (newCached) {
        return { success: true, ...JSON.parse(newCached) };
     }
-    return { success: true, fileCount: 0, monthCount: 0, totalSize: 0, errorCount: 0 };
+    return { success: true, contactCount: 0, monthCount: 0, totalSize: 0, errorCount: 0, lastUpdated: new Date().toISOString() };
   } catch (e) {
     return { success: false, error: e.message };
   }
@@ -395,14 +395,14 @@ function updateBackupStatsCache() {
     const settings = getSettings();
     const rootFolders = DriveApp.getRootFolder().getFoldersByName(ROOT_FOLDER_NAME);
     if (!rootFolders.hasNext()) {
-      PropertiesService.getScriptProperties().setProperty('backupStats', JSON.stringify({ fileCount: 0, monthCount: 0, totalSize: 0, errorCount: 0 }));
+      PropertiesService.getScriptProperties().setProperty('backupStats', JSON.stringify({ contactCount: 0, monthCount: 0, totalSize: 0, errorCount: 0, lastUpdated: new Date().toISOString() }));
       return;
     }
     const root = rootFolders.next();
 
-    let fileCount = 0;
     let totalSize = 0;
     const months = new Set();
+    const contacts = new Set();
     let errorCount = 0;
 
     const inboxFolders = DriveApp.getRootFolder().getFoldersByName(INBOX_FOLDER_NAME);
@@ -419,6 +419,7 @@ function updateBackupStatsCache() {
       const firstFolder = firstLevel.next();
       
       if (settings.folderStructure === 'A') {
+        contacts.add(firstFolder.getName());
         const monthFolders = firstFolder.getFolders();
         while (monthFolders.hasNext()) {
           const monthFolder = monthFolders.next();
@@ -426,7 +427,6 @@ function updateBackupStatsCache() {
           const files = monthFolder.getFiles();
           while (files.hasNext()) {
             const f = files.next();
-            fileCount++;
             totalSize += f.getSize();
           }
         }
@@ -435,14 +435,15 @@ function updateBackupStatsCache() {
         const files = firstFolder.getFiles();
         while (files.hasNext()) {
           const f = files.next();
-          fileCount++;
           totalSize += f.getSize();
+          const match = f.getName().match(/^(.*?)(?:\\.txt)?$/);
+          if (match) contacts.add(match[1]);
         }
       }
     }
 
     PropertiesService.getScriptProperties().setProperty('backupStats', JSON.stringify({
-      fileCount, monthCount: months.size, totalSize, errorCount
+      contactCount: contacts.size, monthCount: months.size, totalSize, errorCount, lastUpdated: new Date().toISOString()
     }));
   } catch (e) {
     Logger.log('Cache update failed: ' + e.message);

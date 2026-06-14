@@ -494,10 +494,14 @@ function loadStats() {
         return;
       }
       
+      const errHtml = res.errorCount > 0 ? `<span style="color:#ff7e7e; font-weight:600;">⚠️ ${res.errorCount} 錯誤</span>` : '';
+
       document.getElementById('manageStats').innerHTML =
-        `<span><span class="sv">${res.fileCount}</span> 個檔案</span>
+        `<span><span class="sv">${res.contactCount}</span> 位聯絡人</span>
          <span><span class="sv">${res.monthCount}</span> 個月份</span>
-         <span><span class="sv">${fmt(res.totalSize||0)}</span></span>`;
+         <span><span class="sv">${fmt(res.totalSize||0)}</span></span>
+         <span>最後同步: <span class="sv" style="font-weight:normal">${res.lastUpdated ? ago(res.lastUpdated) : '從未'}</span></span>
+         ${errHtml}`;
 
       if (res.errorCount > 0) {
         show('errorSection');
@@ -507,7 +511,7 @@ function loadStats() {
       }
 
       show('stateEmpty');
-      if (res.fileCount === 0) {
+      if (res.contactCount === 0 && res.totalSize === 0) {
         document.querySelector('.empty-text').innerHTML = `
           還沒有任何備份<br>
           將 LINE 匯出的 <em>.txt 檔案</em> 上傳到<br>
