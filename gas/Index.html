@@ -94,6 +94,51 @@
     }
     .loading-text { color: var(--muted); font-size: 13px; }
 
+    /* ── Search Bar ── */
+    .search-box {
+      position: relative; margin-bottom: 16px;
+    }
+    .search-input {
+      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 14px 12px 38px; color: var(--text);
+      font-family: inherit; font-size: 14px; transition: border-color .2s;
+    }
+    .search-input:focus { outline: none; border-color: var(--green); background: rgba(255,255,255,0.08); }
+    .search-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      font-size: 16px; color: var(--muted); pointer-events: none;
+    }
+
+    /* ── Grouping (Accordion) ── */
+    details.group-card {
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+      border-radius: 12px; margin-bottom: 12px; overflow: hidden;
+    }
+    details.group-card[open] {
+      background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.15);
+    }
+    summary.group-header {
+      padding: 14px 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+      list-style: none; user-select: none; transition: background .2s;
+    }
+    summary.group-header::-webkit-details-marker { display: none; }
+    summary.group-header:hover { background: rgba(255,255,255,0.03); }
+    .group-title-wrap { display: flex; align-items: center; gap: 10px; }
+    .group-icon { font-size: 12px; color: var(--muted); display: flex; align-items: center; justify-content: center; transition: transform .3s; }
+    details.group-card[open] .group-icon { transform: rotate(90deg); color: var(--green); }
+    .group-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .group-count { font-size: 11px; color: var(--muted); background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 10px; font-weight: normal; }
+    .group-meta { font-size: 12px; color: var(--muted); text-align: right; line-height: 1.4; }
+    
+    .group-body {
+      padding: 4px 16px 16px 16px; border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .group-body .backup-row {
+      border: 1px solid rgba(255,255,255,0.08); border-radius: 8px;
+      margin-bottom: 8px; background: rgba(0,0,0,0.2);
+    }
+    .group-body .backup-row:last-child { margin-bottom: 0; }
+
     /* ── Empty ── */
     .empty-state { text-align: center; padding: 48px 16px; color: var(--muted); }
     .empty-icon { font-size: 44px; margin-bottom: 14px; }
@@ -327,6 +372,12 @@
           <div class="error-list" id="errorList"></div>
         </div>
 
+        <!-- Search Bar -->
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" id="searchInput" placeholder="搜尋聯絡人或月份..." oninput="renderList()">
+        </div>
+
         <div class="backup-list" id="backupList"></div>
 
         <hr class="divider">
@@ -424,6 +475,7 @@
 
 <script>
 let allBackups = [];
+let currentStructure = 'A';
 
 // ── Load ──
 function loadBackups() {
@@ -454,6 +506,7 @@ function render(res) {
   }
 
   allBackups = res.backups || [];
+  currentStructure = res.folderStructure || 'A';
 
   if (allBackups.length === 0) {
     show('stateEmpty'); hide('stateList'); return;
@@ -483,24 +536,97 @@ function render(res) {
     hide('errorSection');
   }
 
-  // Rows
-  document.getElementById('backupList').innerHTML = allBackups.map((b,i) => `
-    <div class="backup-row" id="row${i}">
-      <div class="backup-row-main">
-        <div class="backup-month">${b.month}</div>
-        <div class="backup-contact">${b.contactName}</div>
-        <div class="backup-meta">${fmt(b.size)}<br>${ago(b.lastUpdated)}</div>
-        <button class="btn-row-del" onclick="promptDel(${i})">刪除</button>
-      </div>
-      <div class="confirm-strip" id="strip${i}">
-        <span>⚠️ 確定？（移至垃圾桶）</span>
-        <button class="btn-sc" onclick="cancelDel(${i})">取消</button>
-        <button class="btn-sf" onclick="doDel(${i},'${b.id}')">確定</button>
-      </div>
-    </div>`).join('');
-
   document.getElementById('modalInfo').textContent =
     `即將刪除：${allBackups.length} 個檔案（${months} 個月份）`;
+
+  renderList();
+}
+
+function renderList() {
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  
+  // Filter
+  const filtered = allBackups.filter(b => 
+    b.contactName.toLowerCase().includes(query) || 
+    b.month.toLowerCase().includes(query)
+  );
+
+  if (filtered.length === 0) {
+    document.getElementById('backupList').innerHTML = `<div class="empty-state" style="padding:20px"><div class="empty-text">找不到符合「${document.getElementById('searchInput').value}」的備份</div></div>`;
+    return;
+  }
+
+  // Group
+  const groups = {};
+  filtered.forEach((b) => {
+    const groupKey = currentStructure === 'A' ? b.contactName : b.month;
+    const itemKey  = currentStructure === 'A' ? b.month : b.contactName;
+
+    if (!groups[groupKey]) {
+      groups[groupKey] = { items: [], totalSize: 0, latestUpdate: b.lastUpdated };
+    }
+    groups[groupKey].items.push({ ...b, displayLabel: itemKey });
+    groups[groupKey].totalSize += b.size;
+    if (new Date(b.lastUpdated) > new Date(groups[groupKey].latestUpdate)) {
+      groups[groupKey].latestUpdate = b.lastUpdated;
+    }
+  });
+
+  // Sort groups
+  const groupKeys = Object.keys(groups);
+  if (currentStructure === 'A') {
+    groupKeys.sort((a, b) => a.localeCompare(b));
+  } else {
+    groupKeys.sort((a, b) => b.localeCompare(a));
+  }
+
+  const listHtml = groupKeys.map((key) => {
+    const g = groups[key];
+    const icon = currentStructure === 'A' ? '👤' : '📅';
+    
+    // Sort items inside group
+    g.items.sort((a, b) => {
+      if (currentStructure === 'A') return b.month.localeCompare(a.month);
+      return a.contactName.localeCompare(b.contactName);
+    });
+
+    const itemsHtml = g.items.map((b) => {
+      const originalIndex = allBackups.findIndex(x => x.id === b.id);
+      return `
+      <div class="backup-row" id="row${originalIndex}">
+        <div class="backup-row-main">
+          <div class="backup-contact" style="flex:1; font-weight:600; color:var(--text); font-size:14px;">${b.displayLabel}</div>
+          <div class="backup-meta">${fmt(b.size)}<br>${ago(b.lastUpdated)}</div>
+          <button class="btn-row-del" onclick="promptDel(${originalIndex})">刪除</button>
+        </div>
+        <div class="confirm-strip" id="strip${originalIndex}">
+          <span>⚠️ 確定？（移至垃圾桶）</span>
+          <button class="btn-sc" onclick="cancelDel(${originalIndex})">取消</button>
+          <button class="btn-sf" onclick="doDel(${originalIndex},'${b.id}')">確定</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    const isOpen = query.length > 0 || groupKeys.length === 1 ? 'open' : '';
+
+    return `
+    <details class="group-card" ${isOpen}>
+      <summary class="group-header">
+        <div class="group-title-wrap">
+          <div class="group-icon">▶</div>
+          <div class="group-title">${icon} ${key} <span class="group-count">${g.items.length} 檔案</span></div>
+        </div>
+        <div class="group-meta">
+          ${fmt(g.totalSize)}<br>${ago(g.latestUpdate)}
+        </div>
+      </summary>
+      <div class="group-body">
+        ${itemsHtml}
+      </div>
+    </details>`;
+  }).join('');
+
+  document.getElementById('backupList').innerHTML = listHtml;
 }
 
 // ── Row delete ──
@@ -515,9 +641,9 @@ function doDel(i, fileId) {
   google.script.run
     .withSuccessHandler(r => {
       if (r.success) {
-        row.remove();
         allBackups.splice(i,1);
         if (!allBackups.length) { hide('stateList'); show('stateEmpty'); }
+        else { renderList(); }
       } else {
         row.style.opacity='1'; row.style.pointerEvents='';
         alert('刪除失敗：'+r.error);
