@@ -279,8 +279,27 @@ function listBackups() {
 
     const rootFolder = rootFolders.next();
     const backups = [];
+    const errorFiles = [];
     let totalSize = 0;
     const structure = getSettings().folderStructure;
+
+    // 取得待處理資料夾中的錯誤檔案
+    const inboxFolders = DriveApp.getRootFolder().getFoldersByName(INBOX_FOLDER_NAME);
+    if (inboxFolders.hasNext()) {
+      const inboxFolder = inboxFolders.next();
+      const files = inboxFolder.getFilesByType(MimeType.PLAIN_TEXT);
+      while (files.hasNext()) {
+        const file = files.next();
+        if (file.getName().startsWith('ERROR_')) {
+          errorFiles.push({
+            id: file.getId(),
+            name: file.getName(),
+            url: file.getUrl(),
+            lastUpdated: file.getLastUpdated().toISOString()
+          });
+        }
+      }
+    }
 
     const firstLevel = rootFolder.getFolders();
     while (firstLevel.hasNext()) {
@@ -335,6 +354,7 @@ function listBackups() {
     return {
       success: true,
       backups,
+      errorFiles,
       totalSize,
       rootExists: true,
       rootUrl: rootFolder.getUrl(),
@@ -469,7 +489,7 @@ function getExistingSignatures(content) {
 
   const saveSig = () => {
     if (currentDate && currentTime && currentSender) {
-      sigs.add(`${currentDate}|${currentTime}|${currentSender}|${currentMessage.join('\n')}`);
+      sigs.add(`${currentDate}|${currentTime}|${currentSender}|${currentMessage.join('\n').trim()}`);
     }
   };
 

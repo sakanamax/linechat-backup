@@ -120,6 +120,22 @@
     }
     .btn-row-del:hover { background: rgba(255,92,92,0.1); }
 
+    /* ── Error list ── */
+    .error-list { margin-bottom: 24px; }
+    .error-row {
+      border: 1px solid rgba(255,92,92,0.3); border-radius: 10px;
+      margin-bottom: 8px; background: rgba(255,92,92,0.04);
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    }
+    .error-title { font-size: 13px; font-weight: 600; color: #ff7e7e; min-width: 64px; flex-shrink: 0; }
+    .error-name { font-size: 14px; flex: 1; word-break: break-all; }
+    .btn-row-retry {
+      background: none; border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px; color: var(--text); padding: 5px 10px;
+      font-family: inherit; font-size: 12px; cursor: pointer; transition: all .2s;
+    }
+    .btn-row-retry:hover { background: rgba(255,255,255,0.1); }
+
     /* Inline confirm strip */
     .confirm-strip {
       display: none; align-items: center; gap: 10px;
@@ -306,6 +322,11 @@
 
         <div class="manage-stats" id="manageStats"></div>
 
+        <div id="errorSection" style="display:none">
+          <div style="font-size: 13px; font-weight: 600; color: #ff7e7e; margin-bottom: 10px;">⚠️ 處理失敗的檔案 (請檢查內容格式)</div>
+          <div class="error-list" id="errorList"></div>
+        </div>
+
         <div class="backup-list" id="backupList"></div>
 
         <hr class="divider">
@@ -447,6 +468,21 @@ function render(res) {
      <span><span class="sv">${months}</span> 個月份</span>
      <span><span class="sv">${fmt(res.totalSize||0)}</span></span>`;
 
+  // Errors
+  const errors = res.errorFiles || [];
+  if (errors.length > 0) {
+    show('errorSection');
+    document.getElementById('errorList').innerHTML = errors.map((e, i) => `
+      <div class="error-row" id="errRow${i}">
+        <div class="error-title">失敗</div>
+        <div class="error-name"><a href="${e.url}" target="_blank" style="color:var(--text);text-decoration:none">${e.name}</a><br><span style="font-size:11px;color:var(--muted)">${ago(e.lastUpdated)}</span></div>
+        <button class="btn-row-retry" onclick="retryError('${e.id}', ${i})">重新處理</button>
+        <button class="btn-row-del" onclick="deleteError('${e.id}', ${i})">刪除</button>
+      </div>`).join('');
+  } else {
+    hide('errorSection');
+  }
+
   // Rows
   document.getElementById('backupList').innerHTML = allBackups.map((b,i) => `
     <div class="backup-row" id="row${i}">
@@ -492,6 +528,23 @@ function doDel(i, fileId) {
       alert('刪除失敗：'+(e.message||'未知錯誤'));
     })
     .deleteBackupFile(fileId);
+}
+
+function deleteError(fileId, i) {
+  const row = document.getElementById('errRow'+i);
+  row.style.opacity = '.4'; row.style.pointerEvents = 'none';
+  google.script.run
+    .withSuccessHandler(r => { row.remove(); })
+    .withFailureHandler(e => { row.style.opacity='1'; alert('刪除失敗'); })
+    .deleteBackupFile(fileId);
+}
+
+function retryError(fileId, i) {
+  const row = document.getElementById('errRow'+i);
+  row.style.opacity = '.4'; row.style.pointerEvents = 'none';
+  // Just trigger loadBackups to refresh after a brief moment, we could do better by making a new backend function
+  alert('請確保檔案內容已修正，並將檔名的 "ERROR_" 刪除後，重新上傳至「LINE待處理」。此按鈕僅供提示。');
+  row.style.opacity = '1'; row.style.pointerEvents = '';
 }
 
 // ── Delete all modal ──
