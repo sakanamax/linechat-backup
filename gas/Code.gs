@@ -375,7 +375,12 @@ function getBackupStats() {
     if (cached) {
       return { success: true, ...JSON.parse(cached) };
     }
-    // 如果沒有快取，回傳空數據，並觸發一次背景更新
+    // 如果沒有快取，即時算一次（只會發生在第一次使用時）
+    updateBackupStatsCache();
+    const newCached = props.getProperty('backupStats');
+    if (newCached) {
+       return { success: true, ...JSON.parse(newCached) };
+    }
     return { success: true, fileCount: 0, monthCount: 0, totalSize: 0, errorCount: 0 };
   } catch (e) {
     return { success: false, error: e.message };

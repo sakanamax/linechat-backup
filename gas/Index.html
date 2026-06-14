@@ -402,13 +402,13 @@
     </div>
 
     <!-- Loading -->
-    <div class="loading" id="stateLoading">
+    <div class="loading" id="stateLoading" style="display:none">
       <div class="spinner"></div>
       <div class="loading-text">讀取備份清單中...</div>
     </div>
 
     <!-- Content -->
-    <div id="stateContent" style="display:none">
+    <div id="stateContent">
 
       <!-- Empty -->
       <div class="empty-state" id="stateEmpty" style="display:none">
@@ -502,9 +502,19 @@ function loadStats() {
       if (res.errorCount > 0) {
         show('errorSection');
         document.getElementById('errorList').innerHTML = `<div style="padding:10px; color:var(--text)">⚠️ 有 ${res.errorCount} 個檔案處理失敗，請點擊「查詢」查看詳情。</div>`;
-        show('stateContent');
       } else {
         hide('errorSection');
+      }
+
+      show('stateEmpty');
+      if (res.fileCount === 0) {
+        document.querySelector('.empty-text').innerHTML = `
+          還沒有任何備份<br>
+          將 LINE 匯出的 <em>.txt 檔案</em> 上傳到<br>
+          Google Drive 的 <em>「LINE待處理」</em> 資料夾即可開始
+        `;
+      } else {
+        document.querySelector('.empty-text').innerHTML = '點擊右上角「🔍 查詢」載入詳細清單';
       }
     })
     .getBackupStats();
