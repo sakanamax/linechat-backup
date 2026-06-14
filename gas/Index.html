@@ -98,12 +98,10 @@
     .search-box {
       position: relative; margin-bottom: 16px;
     }
-    .search-input {
-      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-      border-radius: 12px; padding: 12px 14px 12px 38px; color: var(--text);
-      font-family: inherit; font-size: 14px; transition: border-color .2s;
-    }
+    .search-input { width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text); padding: 12px 16px 12px 40px; border-radius: 8px; font-size: 15px; transition: 0.2s; }
     .search-input:focus { outline: none; border-color: var(--green); background: rgba(255,255,255,0.08); }
+    .sort-select { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text); padding: 0 12px; border-radius: 8px; font-size: 14px; cursor: pointer; outline: none; transition: 0.2s; }
+    .sort-select:focus { border-color: var(--green); }
     .search-icon {
       position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
       font-size: 16px; color: var(--muted); pointer-events: none;
@@ -430,10 +428,17 @@
           <div class="error-list" id="errorList"></div>
         </div>
 
-        <!-- Search Bar -->
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input type="text" class="search-input" id="searchInput" placeholder="搜尋聯絡人或月份..." oninput="renderList()">
+        <!-- Search and Sort -->
+        <div style="display:flex; gap:12px; margin-bottom: 24px;">
+          <div class="search-box" style="margin-bottom:0; flex:1;">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="searchInput" placeholder="搜尋聯絡人或月份..." oninput="renderList()">
+          </div>
+          <select id="sortSelect" class="sort-select" onchange="renderList()">
+            <option value="name">依名稱排序</option>
+            <option value="time_desc">最近有備份</option>
+            <option value="time_asc">最久未備份</option>
+          </select>
         </div>
 
         <div class="backup-list" id="backupList"></div>
@@ -613,12 +618,20 @@ function renderList() {
   });
 
   // Sort groups
+  const sortSelect = document.getElementById('sortSelect');
+  const sortValue = sortSelect ? sortSelect.value : 'name';
   const groupKeys = Object.keys(groups);
-  if (currentStructure === 'A') {
-    groupKeys.sort((a, b) => a.localeCompare(b));
-  } else {
-    groupKeys.sort((a, b) => b.localeCompare(a));
-  }
+
+  groupKeys.sort((a, b) => {
+    if (sortValue === 'name') {
+      if (currentStructure === 'A') return a.localeCompare(b);
+      return b.localeCompare(a);
+    } else if (sortValue === 'time_desc') {
+      return new Date(groups[b].latestUpdate) - new Date(groups[a].latestUpdate);
+    } else {
+      return new Date(groups[a].latestUpdate) - new Date(groups[b].latestUpdate);
+    }
+  });
 
   const listHtml = groupKeys.map((key) => {
     const g = groups[key];
@@ -657,7 +670,7 @@ function renderList() {
           <div class="group-title">
             ${icon} ${key} 
             <span class="group-count">${g.items.length} 檔案</span>
-            <span style="font-size:12px; color:var(--muted); font-weight:normal; margin-left:8px;">最後備份: ${ago(g.latestUpdate)}</span>
+            <span style="font-size:12px; color:var(--green); background:rgba(0,195,0,0.1); padding:3px 10px; border-radius:12px; font-weight:600; margin-left:8px;">最後備份: ${ago(g.latestUpdate)}</span>
           </div>
         </div>
         <div class="group-meta" style="align-items:center; display:flex;">
