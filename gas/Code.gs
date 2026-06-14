@@ -373,9 +373,12 @@ function getBackupStats() {
     const props = PropertiesService.getScriptProperties();
     const cached = props.getProperty('backupStats');
     if (cached) {
-      return { success: true, ...JSON.parse(cached) };
+      const parsed = JSON.parse(cached);
+      if (parsed.contactCount !== undefined) {
+        return { success: true, ...parsed };
+      }
     }
-    // 如果沒有快取，即時算一次（只會發生在第一次使用時）
+    // 如果沒有快取或快取格式太舊，即時算一次
     updateBackupStatsCache();
     const newCached = props.getProperty('backupStats');
     if (newCached) {
