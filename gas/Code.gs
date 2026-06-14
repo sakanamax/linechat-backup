@@ -366,13 +366,33 @@ function listBackups() {
 }
 
 /**
- * 取得備份統計數據 (快速掃描)
+ * 取得備份統計數據 (快速掃描) - 改由背景快取提供
  */
 function getBackupStats() {
   try {
+    const props = PropertiesService.getScriptProperties();
+    const cached = props.getProperty('backupStats');
+    if (cached) {
+      return { success: true, ...JSON.parse(cached) };
+    }
+    // 如果沒有快取，回傳空數據，並觸發一次背景更新
+    return { success: true, fileCount: 0, monthCount: 0, totalSize: 0, errorCount: 0 };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
+/**
+ * 實際更新快取的邏輯（由觸發器或修改動作呼叫）
+ */
+function updateBackupStatsCache() {
+  try {
     const settings = getSettings();
     const rootFolders = DriveApp.getRootFolder().getFoldersByName(ROOT_FOLDER_NAME);
-    if (!rootFolders.hasNext()) return { success: true, fileCount: 0, monthCount: 0, totalSize: 0, errorCount: 0 };
+    if (!rootFolders.hasNext()) {
+      PropertiesService.getScriptProperties().setProperty('backupStats', JSON.stringify({ fileCount: 0, monthCount: 0, totalSize: 0, errorCount: 0 }));
+      return;
+    }
     const root = rootFolders.next();
 
     let fileCount = 0;
@@ -416,9 +436,11 @@ function getBackupStats() {
       }
     }
 
-    return { success: true, fileCount, monthCount: months.size, totalSize, errorCount };
+    PropertiesService.getScriptProperties().setProperty('backupStats', JSON.stringify({
+      fileCount, monthCount: months.size, totalSize, errorCount
+    }));
   } catch (e) {
-    return { success: false, error: e.message };
+    Logger.log('Cache update failed: ' + e.message);
   }
 }
 
@@ -438,6 +460,7 @@ function deleteBackupFile(fileId) {
       if (!hasFiles && !hasFolders) parentFolder.setTrashed(true);
     }
 
+    updateBackupStatsCache();
     return { success: true };
   } catch (err) {
     return { success: false, error: err.toString() };
@@ -448,8 +471,9 @@ function deleteBackupFile(fileId) {
 function deleteAllBackups() {
   try {
     const folders = DriveApp.getRootFolder().getFoldersByName(ROOT_FOLDER_NAME);
-    if (!folders.hasNext()) return { success: true };
-    folders.next().setTrashed(true);
+    if (folders.hasNext()) folders.next().setTrashed(true);
+    
+    updateBackupStatsCache();
     return { success: true };
   } catch (err) {
     return { success: false, error: err.toString() };
@@ -494,6 +518,9 @@ function watchAndProcess() {
   }
 
   if (log.length > 0) Logger.log('LINE備份自動處理結果：\n' + log.join('\n'));
+  
+  // 更新統計快取
+  updateBackupStatsCache();
 }
 
 // ── 安裝觸發器（工程師執行一次即可）──────────────

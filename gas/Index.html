@@ -388,12 +388,17 @@
 
   <div class="card">
 
-    <div class="manage-header">
+    <div class="manage-header" style="margin-bottom:0">
       <div class="manage-title">已備份的對話</div>
-      <button class="btn-refresh" id="btnRefresh" onclick="loadBackups()">
-        <span class="ri">🔍</span> 查詢
-      </button>
-
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div id="manageStats" style="font-size:13px; color:var(--muted); display:flex; gap:12px;">
+          <!-- Stats will be injected here instantly -->
+          正在讀取統計資料...
+        </div>
+        <button class="btn-refresh" id="btnRefresh" onclick="loadBackups()">
+          <span class="ri">🔍</span> 查詢
+        </button>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -418,7 +423,7 @@
       <!-- List -->
       <div id="stateList" style="display:none">
 
-        <div class="manage-stats" id="manageStats"></div>
+        <!-- Stats are now in header -->
 
         <div id="errorSection" style="display:none">
           <div style="font-size: 13px; font-weight: 600; color: #ff7e7e; margin-bottom: 10px;">⚠️ 處理失敗的檔案 (請檢查內容格式)</div>
@@ -482,14 +487,10 @@ let currentStructure = 'A';
 // ── Load ──
 
 function loadStats() {
-  show('stateLoading'); hide('stateList'); hide('stateEmpty');
   google.script.run
     .withSuccessHandler(res => {
-      hide('stateLoading');
-      show('stateContent');
       if (!res.success) {
-        show('stateEmpty');
-        document.querySelector('.empty-text').innerHTML = '讀取統計失敗：' + (res.error||'');
+        document.getElementById('manageStats').innerHTML = '<span style="color:#ff7e7e">統計資料讀取失敗</span>';
         return;
       }
       
@@ -501,13 +502,10 @@ function loadStats() {
       if (res.errorCount > 0) {
         show('errorSection');
         document.getElementById('errorList').innerHTML = `<div style="padding:10px; color:var(--text)">⚠️ 有 ${res.errorCount} 個檔案處理失敗，請點擊「查詢」查看詳情。</div>`;
+        show('stateContent');
       } else {
         hide('errorSection');
       }
-
-      show('stateContent');
-      show('stateEmpty');
-      document.querySelector('.empty-text').innerHTML = '點擊右上角「查詢」載入詳細清單';
     })
     .getBackupStats();
 }
@@ -547,13 +545,6 @@ function render(res) {
   }
 
   hide('stateEmpty'); show('stateList');
-
-  // Stats
-  const months = new Set(allBackups.map(b => b.month)).size;
-  document.getElementById('manageStats').innerHTML =
-    `<span><span class="sv">${allBackups.length}</span> 個檔案</span>
-     <span><span class="sv">${months}</span> 個月份</span>
-     <span><span class="sv">${fmt(res.totalSize||0)}</span></span>`;
 
   // Errors
   const errors = res.errorFiles || [];
