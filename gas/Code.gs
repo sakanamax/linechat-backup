@@ -365,6 +365,52 @@ function listBackups() {
   }
 }
 
+/**
+ * 取得備份統計數據 (快速掃描)
+ */
+function getBackupStats() {
+  try {
+    const settings = getSettings();
+    const root = getTargetFolder();
+    if (!root) return { success: true, fileCount: 0, monthCount: 0, totalSize: 0, errorCount: 0 };
+
+    let fileCount = 0;
+    let totalSize = 0;
+    const months = new Set();
+    let errorCount = 0;
+
+    const pending = getPendingFolder();
+    if (pending) {
+      const pFiles = pending.getFiles();
+      while (pFiles.hasNext()) {
+        if (pFiles.next().getName().startsWith('ERROR_')) errorCount++;
+      }
+    }
+
+    const folders = root.getFolders();
+    while (folders.hasNext()) {
+      const sub = folders.next();
+      const isMonthFolder = (settings.folderStructure === 'B' && sub.getName().match(/^\d{4}-\d{2}$/));
+      if (isMonthFolder) months.add(sub.getName());
+      
+      const files = sub.getFiles();
+      while (files.hasNext()) {
+        const f = files.next();
+        fileCount++;
+        totalSize += f.getSize();
+        if (settings.folderStructure === 'A') {
+          const match = f.getName().match(/^(\d{4}-\d{2})/);
+          if (match) months.add(match[1]);
+        }
+      }
+    }
+
+    return { success: true, fileCount, monthCount: months.size, totalSize, errorCount };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
 // ── 刪除單一備份檔案（移至垃圾桶）──────────────
 // 若月份資料夾因此變為空，也一併移至垃圾桶
 function deleteBackupFile(fileId) {

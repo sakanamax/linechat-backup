@@ -341,6 +341,7 @@
       <button class="btn-refresh" id="btnRefresh" onclick="loadBackups()">
         <span class="ri">↻</span> 重新整理
       </button>
+
     </div>
 
     <!-- Loading -->
@@ -478,6 +479,36 @@ let allBackups = [];
 let currentStructure = 'A';
 
 // ── Load ──
+
+function loadStats() {
+  show('stateLoading'); hide('stateList'); hide('stateEmpty');
+  google.script.run
+    .withSuccessHandler(res => {
+      hide('stateLoading');
+      if (!res.success) {
+        show('stateEmpty');
+        document.querySelector('.empty-text').innerHTML = '讀取統計失敗：' + (res.error||'');
+        return;
+      }
+      
+      document.getElementById('manageStats').innerHTML =
+        `<span><span class="sv">${res.fileCount}</span> 個檔案</span>
+         <span><span class="sv">${res.monthCount}</span> 個月份</span>
+         <span><span class="sv">${fmt(res.totalSize||0)}</span></span>`;
+
+      if (res.errorCount > 0) {
+        show('errorSection');
+        document.getElementById('errorList').innerHTML = `<div style="padding:10px; color:var(--text)">⚠️ 有 ${res.errorCount} 個檔案處理失敗，請點擊「查詢」查看詳情。</div>`;
+      } else {
+        hide('errorSection');
+      }
+
+      show('stateEmpty');
+      document.querySelector('.empty-text').innerHTML = '點擊右上角「查詢」載入詳細清單';
+    })
+    .getBackupStats();
+}
+
 function loadBackups() {
   const btn = document.getElementById('btnRefresh');
   btn.classList.add('spinning');
