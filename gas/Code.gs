@@ -371,36 +371,47 @@ function listBackups() {
 function getBackupStats() {
   try {
     const settings = getSettings();
-    const root = getTargetFolder();
-    if (!root) return { success: true, fileCount: 0, monthCount: 0, totalSize: 0, errorCount: 0 };
+    const rootFolders = DriveApp.getRootFolder().getFoldersByName(ROOT_FOLDER_NAME);
+    if (!rootFolders.hasNext()) return { success: true, fileCount: 0, monthCount: 0, totalSize: 0, errorCount: 0 };
+    const root = rootFolders.next();
 
     let fileCount = 0;
     let totalSize = 0;
     const months = new Set();
     let errorCount = 0;
 
-    const pending = getPendingFolder();
-    if (pending) {
-      const pFiles = pending.getFiles();
+    const inboxFolders = DriveApp.getRootFolder().getFoldersByName(INBOX_FOLDER_NAME);
+    if (inboxFolders.hasNext()) {
+      const inboxFolder = inboxFolders.next();
+      const pFiles = inboxFolder.getFilesByType(MimeType.PLAIN_TEXT);
       while (pFiles.hasNext()) {
         if (pFiles.next().getName().startsWith('ERROR_')) errorCount++;
       }
     }
 
-    const folders = root.getFolders();
-    while (folders.hasNext()) {
-      const sub = folders.next();
-      const isMonthFolder = (settings.folderStructure === 'B' && sub.getName().match(/^\d{4}-\d{2}$/));
-      if (isMonthFolder) months.add(sub.getName());
+    const firstLevel = root.getFolders();
+    while (firstLevel.hasNext()) {
+      const firstFolder = firstLevel.next();
       
-      const files = sub.getFiles();
-      while (files.hasNext()) {
-        const f = files.next();
-        fileCount++;
-        totalSize += f.getSize();
-        if (settings.folderStructure === 'A') {
-          const match = f.getName().match(/^(\d{4}-\d{2})/);
-          if (match) months.add(match[1]);
+      if (settings.folderStructure === 'A') {
+        const monthFolders = firstFolder.getFolders();
+        while (monthFolders.hasNext()) {
+          const monthFolder = monthFolders.next();
+          months.add(monthFolder.getName());
+          const files = monthFolder.getFiles();
+          while (files.hasNext()) {
+            const f = files.next();
+            fileCount++;
+            totalSize += f.getSize();
+          }
+        }
+      } else {
+        months.add(firstFolder.getName());
+        const files = firstFolder.getFiles();
+        while (files.hasNext()) {
+          const f = files.next();
+          fileCount++;
+          totalSize += f.getSize();
         }
       }
     }
