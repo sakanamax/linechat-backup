@@ -575,6 +575,7 @@ function render(res) {
     hide('errorSection');
   }
 
+  const months = new Set(allBackups.map(b => b.month)).size;
   document.getElementById('modalInfo').textContent =
     `即將刪除：${allBackups.length} 個檔案（${months} 個月份）`;
 
